@@ -1,3 +1,5 @@
+using System;
+using System.Xml.Serialization;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -11,18 +13,37 @@ public class ControleurJeu : MonoBehaviour
     /// </summary>
     public static ControleurJeu Instance { get; private set; }
 
-    [field:SerializeField, Tooltip("Référence aux contrôles du joueur.")]
+    [field: SerializeField, Tooltip("Référence aux contrôles du joueur.")]
     public PlayerInput Controles { get; private set; }
 
+    public Action ChangerEtat;
+    public bool EnPause { get; private set; }
     private void Awake()
     {
-        if(Instance == null)
+        if (Instance == null)
         {
             Instance = this;
+            EnPause = false;
         }
         else
         {
             Destroy(gameObject);
+        }
+    }
+    public void AjouterEcoute(Action ecoute)
+    {
+        ChangerEtat += ecoute;
+    }
+    public void EnleverEcoute(Action ecoute)
+    {
+        ChangerEtat -= ecoute;
+    }
+    public void ChangerEtatActuelle(bool enPause)
+    {
+        if (EnPause != enPause)
+        {
+            EnPause = enPause;
+            ChangerEtat?.Invoke();
         }
     }
 }

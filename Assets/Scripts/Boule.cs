@@ -31,7 +31,15 @@ public class Boule : MonoBehaviour
 
     [SerializeField, Tooltip("Multiplicateur de force appliqué lors de l'accélération.")]
     float multiplicateurForceAcceleration = 15.0f;
-
+    private int nombrePiecesObtenus = 5;
+    private bool enPause;
+    public int NombrePieces
+    {
+        get
+        {
+            return nombrePiecesObtenus;
+        }
+    }
     /// <summary>
     /// Obtient la vélocité actuelle de la boule.
     /// </summary>
@@ -41,7 +49,7 @@ public class Boule : MonoBehaviour
     {
         rigidbody = GetComponent<Rigidbody>();
         enAcceleration = false;
-
+        enPause = false;
         PlayerInput controles = ControleurJeu.Instance.Controles;
         controles.actions.FindAction("Commencer").performed += CommencerJeu;
     }
@@ -53,12 +61,14 @@ public class Boule : MonoBehaviour
 
         PlayerInput controles = ControleurJeu.Instance.Controles;
 
-        if (controles == null) 
+        if (controles == null)
             return;
 
         controles.actions.FindAction("Diriger").performed -= CommencerDirection;
         controles.actions.FindAction("Diriger").canceled -= ArreterDirection;
         controles.actions.FindAction("Accelerer").performed -= UtiliserChargeAcceleration;
+        controles.actions.FindAction("Pause").performed -= UtiliserPause;
+
     }
 
     /// <summary>
@@ -74,7 +84,7 @@ public class Boule : MonoBehaviour
         controles.actions.FindAction("Diriger").canceled += ArreterDirection;
         controles.actions.FindAction("Accelerer").performed += UtiliserChargeAcceleration;
         controles.actions.FindAction("Commencer").performed -= CommencerJeu;
-
+        controles.actions.FindAction("Pause").performed += UtiliserPause;
         rigidbody.useGravity = true;
     }
 
@@ -103,7 +113,7 @@ public class Boule : MonoBehaviour
 
     private void Diriger()
     {
-        if(!Mathf.Approximately(forceAppliquee.sqrMagnitude, 0.0f))
+        if (!Mathf.Approximately(forceAppliquee.sqrMagnitude, 0.0f))
         {
             rigidbody.AddForce(forceAppliquee, ForceMode.Force);
         }
@@ -125,7 +135,7 @@ public class Boule : MonoBehaviour
     private IEnumerator AppliquerAcceleration()
     {
         enAcceleration = true;
-       
+
         float tempsEcoule = 0.0f;
         while (tempsEcoule < dureeAcceleration)
         {
@@ -134,5 +144,29 @@ public class Boule : MonoBehaviour
             yield return new WaitForFixedUpdate();
         }
         enAcceleration = false;
+    }
+    public void IncrementerNombrePieces()
+    {
+        nombrePiecesObtenus++;
+    }
+    private void UtiliserPause(InputAction.CallbackContext contexte)
+    {
+        if (!enPause && nombrePiecesObtenus >= 5)
+        {
+            nombrePiecesObtenus -= 5;
+            StartCoroutine(GestionPause());
+        }
+    }
+    private IEnumerator GestionPause()
+    {
+        enPause = true;
+        ControleurJeu.Instance.ChangerEtatActuelle(enPause);
+        while (enPause)
+        {
+            yield return new WaitForSecondsRealtime(4) ;
+            enPause = true;
+        }
+        enPause = true;
+        ControleurJeu.Instance.ChangerEtatActuelle(enPause);
     }
 }
